@@ -8,6 +8,12 @@ load_dotenv()
 APP_HOST = os.getenv('APP_HOST')
 APP_PORT = int(os.getenv('APP_PORT'))
 
+#SMTP
+SMTP_SERVER=os.getenv("SMTP_SERVER")
+SMTP_EMAIL=os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD=os.getenv("SMTP_PASSWORD")
+SMTP_PORT=int(os.getenv("SMTP_PORT"))
+
 # DATABASE SETTINGS
 DB_ENGINE = os.getenv('DB_ENGINE')
 DB_NAME = os.getenv('DB_NAME')
@@ -29,6 +35,7 @@ class TokenConfig:
     default_expired: int = 120 # in minutes
     access_expired: int = 15 # in minutes
     refresh_expired: int = 7 * 1440 # in days
+    confirmation_email_expired: int = 7 * 1440 # in days
     url: str = '/api/auth/login'
 
 TOKEN_CONFIG = TokenConfig()

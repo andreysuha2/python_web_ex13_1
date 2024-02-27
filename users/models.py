@@ -17,6 +17,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     contacts: Mapped[List["Contact"]] = relationship(back_populates="user")
     tokens: Mapped[List["Token"]] = relationship(back_populates="user")
+    confirmed_at: Mapped[bool] = mapped_column(DateTime, nullable=True)
 
 class Token(Base):
     __tablename__ = "tokens"

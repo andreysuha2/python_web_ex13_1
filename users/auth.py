@@ -16,6 +16,7 @@ from typing import Callable, List
 class TokenScopes(Enum):
     ACCESS='access_token'
     REFRESH='refresh_token'
+    EMAIL_CONFIRMATION='email_confirmation_token'
 
 class Password:
     def __init__(self, pwd_context: CryptContext):
@@ -60,18 +61,25 @@ class Token:
     
     async def create_refresh(self, data: dict, expires_delta: Optional[float] = None) -> str:
         return await self.create(data=data, scope=TokenScopes.REFRESH, expires_delta=expires_delta or self.config.refresh_expired)
+    
+    async def create_email_confirm(self, data: dict, expires_delta: Optional[float] = None) -> str:
+        return await self.create(data=data, scope=TokenScopes.EMAIL_CONFIRMATION, expires_delta=expires_delta or self.config.confirmation_email_expired)
 
     async def decode_access(self, token: str) -> str:
         return await self.decode(token, TokenScopes.ACCESS)
 
     async def decode_refresh(self, token: str) -> str:
         return await self.decode(token, TokenScopes.REFRESH)
+    
+    async def decode_email_confirm(self, token: str) -> str:
+        return await self.decode(token, TokenScopes.EMAIL_CONFIRMATION)
 
 class Auth:
     oauth2_scheme = OAuth2PasswordBearer(TOKEN_CONFIG.url)
     user_model = User
     tokens_model = TokenDBModel
     invalid_credential_error = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid username or password')
+    invalid_confirmation_error = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Email not confirmed')
     invalid_refresh_token_error = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid refresh token')
     credentionals_exception=HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -108,6 +116,8 @@ class Auth:
         user = await self.__get_user(credentials.username, db)
         if not self.validate(user, credentials):
             raise self.invalid_credential_error
+        if user.confirmed_at is None:
+            raise self.invalid_confirmation_error
         return await self.__generate_tokens(user, db)
     
     async def __generate_tokens(self, user: user_model, db: Session) -> schemas.TokenModel:
