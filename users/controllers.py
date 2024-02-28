@@ -27,3 +27,11 @@ class AuthController:
         db.commit()
         db.refresh(user)
         return user
+    
+class UsersController:
+    base_model = User
+
+    async def update_avatar(self, user: base_model, url: str, db: Session):
+        user.avatar = url
+        db.commit()
+        return user

@@ -3,6 +3,7 @@ from app.types import DBConnectionDep, AuthDep
 from typing import Annotated, List
 from contacts.controllers import ContactController 
 from contacts import schemas
+from fastapi_limiter.depends import RateLimiter
 
 router = APIRouter(prefix='/contacts', tags=['contacts'])
 ContactControllerDep = Annotated[ContactController, Depends(ContactController)]
@@ -18,7 +19,7 @@ async def contacts_list(
     ):
     return await controller.list(user=user, skip=skip, limit=limit, db=db, q=q)
 
-@router.post('/', response_model=schemas.ContactResponse, status_code=status.HTTP_201_CREATED)
+@router.post('/', response_model=schemas.ContactResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=1, seconds=10))])
 async def create_contact(user: AuthDep, controller: ContactControllerDep, db: DBConnectionDep, body: schemas.ContactModel):
     return await controller.create(user=user, body=body, db=db)
 
@@ -33,7 +34,7 @@ async def read_contact(user: AuthDep, controller: ContactControllerDep, db: DBCo
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return contact
 
-@router.put('/{contact_id}', response_model=schemas.ContactResponse)
+@router.put('/{contact_id}', response_model=schemas.ContactResponse, dependencies=[Depends(RateLimiter(times=1, seconds=10))])
 async def update_contact(user: AuthDep, controller: ContactControllerDep, db: DBConnectionDep, body: schemas.ContactModel, contact_id: int):
     contact = await controller.update(user=user, id=contact_id, body=body, db=db)
     if contact is None:
